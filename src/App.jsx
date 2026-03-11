@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { supabase } from './supabase';
 import Layout from './components/Layout';
 import SplashScreen from './components/SplashScreen';
 import LoginScreen from './components/LoginScreen';
@@ -10,21 +11,37 @@ import Dashboard from './pages/Dashboard';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('tightlines_user'));
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
   }, []);
 
   const handleLogin = useCallback(() => {
-    setIsLoggedIn(true);
+    // Session will be set by onAuthStateChange listener
   }, []);
 
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
-  if (!isLoggedIn) {
+  if (authLoading) return null;
+
+  if (!session) {
     return <LoginScreen onLogin={handleLogin} />;
   }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Fish, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Fish, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { supabase } from '../supabase';
 
 export default function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -7,6 +8,8 @@ export default function LoginScreen({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState('login'); // 'login' or 'signup'
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,13 +17,29 @@ export default function LoginScreen({ onLogin }) {
       setError('Please fill in all fields');
       return;
     }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
     setError('');
+    setMessage('');
     setLoading(true);
-    // Simulate authentication delay
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    localStorage.setItem('tightlines_user', JSON.stringify({ email, name: email.split('@')[0] }));
-    onLogin();
+
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        setMessage('Check your email for a confirmation link!');
+        setLoading(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        onLogin();
+      }
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,9 +59,13 @@ export default function LoginScreen({ onLogin }) {
         <p className="text-[10px] text-amber-600 tracking-[0.25em] uppercase">Fly Fishing Journal</p>
       </div>
 
-      {/* Login Form */}
+      {/* Login/Signup Form */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <div className="card-rugged p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-amber-100 text-center uppercase tracking-wide">
+            {mode === 'login' ? 'Sign In' : 'Create Account'}
+          </h2>
+
           <div>
             <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide block mb-1">Email</label>
             <input
@@ -61,9 +84,9 @@ export default function LoginScreen({ onLogin }) {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
+                placeholder={mode === 'signup' ? 'Min 6 characters' : 'Enter password'}
                 className="w-full input-rugged pr-10"
-                autoComplete="current-password"
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               />
               <button
                 type="button"
@@ -76,6 +99,7 @@ export default function LoginScreen({ onLogin }) {
           </div>
 
           {error && <p className="text-red-400 text-xs">{error}</p>}
+          {message && <p className="text-green-400 text-xs">{message}</p>}
 
           <button
             type="submit"
@@ -85,10 +109,10 @@ export default function LoginScreen({ onLogin }) {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Signing in...
+                {mode === 'login' ? 'Signing in...' : 'Creating account...'}
               </>
             ) : (
-              'Sign In'
+              mode === 'login' ? 'Sign In' : 'Create Account'
             )}
           </button>
         </div>
@@ -102,16 +126,13 @@ export default function LoginScreen({ onLogin }) {
         <button
           type="button"
           onClick={() => {
-            setLoading(true);
-            setTimeout(() => {
-              localStorage.setItem('tightlines_user', JSON.stringify({ email: 'guest', name: 'Angler' }));
-              setLoading(false);
-              onLogin();
-            }, 800);
+            setMode(mode === 'login' ? 'signup' : 'login');
+            setError('');
+            setMessage('');
           }}
           className="w-full bg-stone-800 text-stone-300 py-2.5 rounded-lg font-medium text-sm border border-stone-700 hover:bg-stone-700 transition-colors"
         >
-          Continue as Guest
+          {mode === 'login' ? 'Create an Account' : 'Back to Sign In'}
         </button>
 
         <p className="text-center text-[10px] text-stone-600 mt-4">

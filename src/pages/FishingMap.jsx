@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db';
+import { useSupabaseTable } from '../useSupabaseData';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Plus, Trash2, X, Navigation, MapPin } from 'lucide-react';
@@ -13,7 +12,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const WATER_TYPES = ['River', 'Creek', 'Lake', 'Pond', 'Reservoir', 'Tailwater', 'Spring Creek'];
-const emptySpot = { name: '', lat: '', lng: '', waterType: 'River', accessNotes: '', species: '', notes: '' };
+const emptySpot = { name: '', lat: '', lng: '', water_type: 'River', access_notes: '', species: '', notes: '' };
 
 function ClickHandler({ onMapClick }) {
   useMapEvents({ click: (e) => onMapClick(e.latlng) });
@@ -21,7 +20,7 @@ function ClickHandler({ onMapClick }) {
 }
 
 export default function FishingMap() {
-  const spots = useLiveQuery(() => db.spots.toArray());
+  const { data: spots, add, update, remove: removeItem } = useSupabaseTable('spots');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptySpot);
   const [editId, setEditId] = useState(null);
@@ -45,11 +44,11 @@ export default function FishingMap() {
   };
 
   const save = async () => {
-    const data = { ...form, lat: Number(form.lat), lng: Number(form.lng) };
+    const data = { name: form.name, lat: Number(form.lat), lng: Number(form.lng), water_type: form.water_type, access_notes: form.access_notes || null, species: form.species || null, notes: form.notes || null };
     if (editId) {
-      await db.spots.update(editId, data);
+      await update(editId, data);
     } else {
-      await db.spots.add(data);
+      await add(data);
     }
     setForm(emptySpot);
     setShowForm(false);
@@ -57,13 +56,13 @@ export default function FishingMap() {
   };
 
   const edit = (s) => {
-    setForm({ ...emptySpot, ...s, lat: String(s.lat), lng: String(s.lng) });
+    setForm({ name: s.name || '', lat: String(s.lat), lng: String(s.lng), water_type: s.water_type || 'River', access_notes: s.access_notes || '', species: s.species || '', notes: s.notes || '' });
     setEditId(s.id);
     setShowForm(true);
   };
 
   const remove = async (id) => {
-    if (confirm('Delete this spot?')) await db.spots.delete(id);
+    if (confirm('Delete this spot?')) await removeItem(id);
   };
 
   return (
@@ -99,9 +98,9 @@ export default function FishingMap() {
               <Popup>
                 <div className="text-sm">
                   <strong>{s.name}</strong>
-                  <br />{s.waterType}
+                  <br />{s.water_type}
                   {s.species && <><br />Fish: {s.species}</>}
-                  {s.accessNotes && <><br />Access: {s.accessNotes}</>}
+                  {s.access_notes && <><br />Access: {s.access_notes}</>}
                   <br />
                   <button onClick={() => edit(s)} className="text-blue-500 mr-2 text-xs">Edit</button>
                   <button onClick={() => remove(s.id)} className="text-red-500 text-xs">Delete</button>
@@ -137,7 +136,7 @@ export default function FishingMap() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Water Type</label>
-              <select value={form.waterType} onChange={set('waterType')} className="w-full input-rugged">
+              <select value={form.water_type} onChange={set('water_type')} className="w-full input-rugged">
                 {WATER_TYPES.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
@@ -148,7 +147,7 @@ export default function FishingMap() {
           </div>
           <div>
             <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Access Notes</label>
-            <textarea value={form.accessNotes} onChange={set('accessNotes')} rows={2} placeholder="Parking, trail access, regulations..." className="w-full input-rugged" />
+            <textarea value={form.access_notes} onChange={set('access_notes')} rows={2} placeholder="Parking, trail access, regulations..." className="w-full input-rugged" />
           </div>
           <button onClick={save} disabled={!form.name || !form.lat || !form.lng} className="w-full btn-warm py-2.5 rounded-lg font-semibold text-sm">
             {editId ? 'Update Spot' : 'Save Spot'}
@@ -165,7 +164,7 @@ export default function FishingMap() {
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-green-500" />
                   <span className="font-medium text-amber-100">{s.name}</span>
-                  <span className="text-xs text-stone-500">{s.waterType}</span>
+                  <span className="text-xs text-stone-500">{s.water_type}</span>
                 </div>
                 {s.species && <p className="text-xs text-stone-500 ml-5.5">{s.species}</p>}
               </div>

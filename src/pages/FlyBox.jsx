@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db';
+import { useSupabaseTable } from '../useSupabaseData';
 import { Plus, Minus, Trash2, X, Bug, Search, Star } from 'lucide-react';
 
 const FLY_TYPES = ['Dry Fly', 'Nymph', 'Streamer', 'Emerger', 'Wet Fly', 'Terrestrial', 'Egg', 'Other'];
@@ -8,8 +7,8 @@ const FLY_TYPES = ['Dry Fly', 'Nymph', 'Streamer', 'Emerger', 'Wet Fly', 'Terres
 const emptyFly = { name: '', type: 'Dry Fly', size: '', color: '', quantity: 1, notes: '' };
 
 export default function FlyBox() {
-  const flies = useLiveQuery(() => db.flies.orderBy('name').toArray());
-  const catches = useLiveQuery(() => db.catches.toArray());
+  const { data: flies, add, update, remove: removeItem } = useSupabaseTable('flies');
+  const { data: catches } = useSupabaseTable('catches');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyFly);
   const [editId, setEditId] = useState(null);
@@ -19,11 +18,11 @@ export default function FlyBox() {
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const save = async () => {
-    const data = { ...form, quantity: Number(form.quantity) || 1, size: form.size };
+    const data = { name: form.name, type: form.type, size: form.size || null, color: form.color || null, quantity: Number(form.quantity) || 1, notes: form.notes || null };
     if (editId) {
-      await db.flies.update(editId, data);
+      await update(editId, data);
     } else {
-      await db.flies.add(data);
+      await add(data);
     }
     setForm(emptyFly);
     setShowForm(false);
@@ -31,18 +30,18 @@ export default function FlyBox() {
   };
 
   const edit = (f) => {
-    setForm({ ...emptyFly, ...f });
+    setForm({ name: f.name || '', type: f.type || 'Dry Fly', size: f.size || '', color: f.color || '', quantity: f.quantity ?? 1, notes: f.notes || '' });
     setEditId(f.id);
     setShowForm(true);
   };
 
   const remove = async (id) => {
-    if (confirm('Delete this fly?')) await db.flies.delete(id);
+    if (confirm('Delete this fly?')) await removeItem(id);
   };
 
   const adjustQty = async (id, delta) => {
-    const fly = await db.flies.get(id);
-    if (fly) await db.flies.update(id, { quantity: Math.max(0, fly.quantity + delta) });
+    const fly = flies?.find(f => f.id === id);
+    if (fly) await update(id, { quantity: Math.max(0, fly.quantity + delta) });
   };
 
   const flyUsageCount = (flyName) => {

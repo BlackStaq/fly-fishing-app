@@ -1,17 +1,15 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db';
+import { useSupabaseTable } from '../useSupabaseData';
 import { Fish, Ruler, Star, MapPin, TrendingUp, Droplets, Bug, Trophy, Target } from 'lucide-react';
 
 export default function Dashboard() {
-  const catches = useLiveQuery(() => db.catches.toArray());
-  const flies = useLiveQuery(() => db.flies.toArray());
-  const spots = useLiveQuery(() => db.spots.toArray());
+  const { data: catches } = useSupabaseTable('catches');
+  const { data: flies } = useSupabaseTable('flies');
+  const { data: spots } = useSupabaseTable('spots');
 
   if (!catches) return null;
 
   const totalCatches = catches.length;
-  const biggestFish = catches.reduce((max, c) => (c.lengthInches || 0) > (max?.lengthInches || 0) ? c : max, null);
-  const heaviestFish = catches.reduce((max, c) => (c.weightLbs || 0) > (max?.weightLbs || 0) ? c : max, null);
+  const biggestFish = catches.reduce((max, c) => (c.length_inches || 0) > (max?.length_inches || 0) ? c : max, null);
 
   const flyCounts = {};
   catches.forEach(c => { if (c.fly) flyCounts[c.fly] = (flyCounts[c.fly] || 0) + 1; });
@@ -46,7 +44,7 @@ export default function Dashboard() {
   const maxMonth = Math.max(...monthData.map(([, v]) => v), 1);
 
   const locCounts = {};
-  catches.forEach(c => { if (c.locationName) locCounts[c.locationName] = (locCounts[c.locationName] || 0) + 1; });
+  catches.forEach(c => { if (c.location_name) locCounts[c.location_name] = (locCounts[c.location_name] || 0) + 1; });
   const topLoc = Object.entries(locCounts).sort((a, b) => b[1] - a[1])[0];
 
   const insights = [];
@@ -54,9 +52,9 @@ export default function Dashboard() {
   if (topTech) insights.push(`${topTech[0]} is your most productive technique (${topTech[1]} fish).`);
   if (topFly) insights.push(`Your go-to fly is ${topFly[0]} with ${topFly[1]} fish caught.`);
 
-  const waterTempCatches = catches.filter(c => c.waterTemp);
+  const waterTempCatches = catches.filter(c => c.water_temp);
   if (waterTempCatches.length >= 3) {
-    const avgTemp = waterTempCatches.reduce((s, c) => s + c.waterTemp, 0) / waterTempCatches.length;
+    const avgTemp = waterTempCatches.reduce((s, c) => s + c.water_temp, 0) / waterTempCatches.length;
     insights.push(`Average water temp when you catch fish: ${avgTemp.toFixed(0)}°F.`);
   }
 
@@ -76,7 +74,7 @@ export default function Dashboard() {
         <>
           <div className="grid grid-cols-2 gap-3 mb-4">
             <StatCard icon={Fish} label="Total Catches" value={totalCatches} color="text-green-400" borderColor="border-green-800/50" />
-            <StatCard icon={Trophy} label="Biggest Fish" value={biggestFish?.lengthInches ? `${biggestFish.lengthInches}"` : '-'} sub={biggestFish?.species} color="text-amber-400" borderColor="border-amber-800/50" />
+            <StatCard icon={Trophy} label="Biggest Fish" value={biggestFish?.length_inches ? `${biggestFish.length_inches}"` : '-'} sub={biggestFish?.species} color="text-amber-400" borderColor="border-amber-800/50" />
             <StatCard icon={Target} label="Top Fly" value={topFly ? topFly[0] : '-'} sub={topFly ? `${topFly[1]} catches` : ''} color="text-orange-400" borderColor="border-orange-800/50" />
             <StatCard icon={MapPin} label="Spots Saved" value={spots?.length || 0} color="text-blue-400" borderColor="border-blue-800/50" />
           </div>

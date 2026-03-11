@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db';
+import { useSupabaseTable } from '../useSupabaseData';
 import { Plus, Trash2, ChevronDown, ChevronUp, MapPin, Ruler, Weight, Calendar, X, Thermometer, Cloud } from 'lucide-react';
 
 const SPECIES = ['Rainbow Trout', 'Brown Trout', 'Brook Trout', 'Cutthroat Trout', 'Steelhead', 'Salmon', 'Bass', 'Pike', 'Walleye', 'Panfish', 'Carp', 'Other'];
@@ -9,15 +8,15 @@ const WEATHER_OPTIONS = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Rain', 'Snow', 'Wi
 const WATER_CLARITY = ['Crystal Clear', 'Clear', 'Slightly Stained', 'Stained', 'Muddy'];
 
 const emptyForm = {
-  species: '', lengthInches: '', weightLbs: '', fly: '', technique: '',
-  date: new Date().toISOString().slice(0, 16), locationName: '', lat: '', lng: '',
-  notes: '', photo: '', waterTemp: '', airTemp: '', weather: '', wind: '',
-  waterLevel: '', waterClarity: '', hatchActivity: '',
+  species: '', length_inches: '', weight_lbs: '', fly: '', technique: '',
+  date: new Date().toISOString().slice(0, 16), location_name: '', lat: '', lng: '',
+  notes: '', photo: '', water_temp: '', air_temp: '', weather: '', wind: '',
+  water_level: '', water_clarity: '', hatch_activity: '',
 };
 
 export default function CatchLog() {
-  const catches = useLiveQuery(() => db.catches.orderBy('date').reverse().toArray());
-  const flies = useLiveQuery(() => db.flies.toArray());
+  const { data: catches, add, update, remove: removeItem } = useSupabaseTable('catches');
+  const { data: flies } = useSupabaseTable('flies');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [showConditions, setShowConditions] = useState(false);
@@ -42,11 +41,23 @@ export default function CatchLog() {
   };
 
   const save = async () => {
-    const data = { ...form, lengthInches: form.lengthInches ? Number(form.lengthInches) : null, weightLbs: form.weightLbs ? Number(form.weightLbs) : null, waterTemp: form.waterTemp ? Number(form.waterTemp) : null, airTemp: form.airTemp ? Number(form.airTemp) : null };
+    const data = {
+      species: form.species, fly: form.fly, technique: form.technique,
+      date: form.date, location_name: form.location_name,
+      lat: form.lat ? Number(form.lat) : null, lng: form.lng ? Number(form.lng) : null,
+      photo: form.photo || null, notes: form.notes || null,
+      length_inches: form.length_inches ? Number(form.length_inches) : null,
+      weight_lbs: form.weight_lbs ? Number(form.weight_lbs) : null,
+      water_temp: form.water_temp ? Number(form.water_temp) : null,
+      air_temp: form.air_temp ? Number(form.air_temp) : null,
+      weather: form.weather || null, wind: form.wind || null,
+      water_level: form.water_level || null, water_clarity: form.water_clarity || null,
+      hatch_activity: form.hatch_activity || null,
+    };
     if (editId) {
-      await db.catches.update(editId, data);
+      await update(editId, data);
     } else {
-      await db.catches.add(data);
+      await add(data);
     }
     setForm(emptyForm);
     setShowForm(false);
@@ -55,14 +66,23 @@ export default function CatchLog() {
   };
 
   const edit = (c) => {
-    setForm({ ...emptyForm, ...c, lengthInches: c.lengthInches ?? '', weightLbs: c.weightLbs ?? '', waterTemp: c.waterTemp ?? '', airTemp: c.airTemp ?? '' });
+    setForm({
+      species: c.species || '', length_inches: c.length_inches ?? '', weight_lbs: c.weight_lbs ?? '',
+      fly: c.fly || '', technique: c.technique || '', date: c.date ? c.date.slice(0, 16) : '',
+      location_name: c.location_name || '', lat: c.lat ?? '', lng: c.lng ?? '',
+      notes: c.notes || '', photo: c.photo || '',
+      water_temp: c.water_temp ?? '', air_temp: c.air_temp ?? '',
+      weather: c.weather || '', wind: c.wind || '',
+      water_level: c.water_level || '', water_clarity: c.water_clarity || '',
+      hatch_activity: c.hatch_activity || '',
+    });
     setEditId(c.id);
     setShowForm(true);
-    if (c.waterTemp || c.weather || c.waterClarity) setShowConditions(true);
+    if (c.water_temp || c.weather || c.water_clarity) setShowConditions(true);
   };
 
   const remove = async (id) => {
-    if (confirm('Delete this catch?')) await db.catches.delete(id);
+    if (confirm('Delete this catch?')) await removeItem(id);
   };
 
   const filtered = catches?.filter(c => !filter || c.species === filter);
@@ -98,11 +118,11 @@ export default function CatchLog() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Length (in)</label>
-              <input type="number" value={form.lengthInches} onChange={set('lengthInches')} placeholder="e.g. 18" className="w-full input-rugged" />
+              <input type="number" value={form.length_inches} onChange={set('length_inches')} placeholder="e.g. 18" className="w-full input-rugged" />
             </div>
             <div>
               <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Weight (lbs)</label>
-              <input type="number" step="0.1" value={form.weightLbs} onChange={set('weightLbs')} placeholder="e.g. 2.5" className="w-full input-rugged" />
+              <input type="number" step="0.1" value={form.weight_lbs} onChange={set('weight_lbs')} placeholder="e.g. 2.5" className="w-full input-rugged" />
             </div>
           </div>
           <div>
@@ -119,7 +139,7 @@ export default function CatchLog() {
           <div>
             <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Location</label>
             <div className="flex gap-2">
-              <input value={form.locationName} onChange={set('locationName')} placeholder="e.g. Blue River Mile 3" className="flex-1 input-rugged" />
+              <input value={form.location_name} onChange={set('location_name')} placeholder="e.g. Blue River Mile 3" className="flex-1 input-rugged" />
               <button onClick={getLocation} className="bg-stone-700 text-amber-400 px-2.5 py-2 rounded-lg border border-stone-600 hover:bg-stone-600 transition-colors" title="Get GPS">
                 <MapPin className="w-4 h-4" />
               </button>
@@ -147,11 +167,11 @@ export default function CatchLog() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Water Temp (F)</label>
-                  <input type="number" value={form.waterTemp} onChange={set('waterTemp')} className="w-full input-rugged" />
+                  <input type="number" value={form.water_temp} onChange={set('water_temp')} className="w-full input-rugged" />
                 </div>
                 <div>
                   <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Air Temp (F)</label>
-                  <input type="number" value={form.airTemp} onChange={set('airTemp')} className="w-full input-rugged" />
+                  <input type="number" value={form.air_temp} onChange={set('air_temp')} className="w-full input-rugged" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -164,7 +184,7 @@ export default function CatchLog() {
                 </div>
                 <div>
                   <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Water Clarity</label>
-                  <select value={form.waterClarity} onChange={set('waterClarity')} className="w-full input-rugged">
+                  <select value={form.water_clarity} onChange={set('water_clarity')} className="w-full input-rugged">
                     <option value="">Select...</option>
                     {WATER_CLARITY.map(c => <option key={c}>{c}</option>)}
                   </select>
@@ -172,7 +192,7 @@ export default function CatchLog() {
               </div>
               <div>
                 <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Hatch Activity</label>
-                <input value={form.hatchActivity} onChange={set('hatchActivity')} placeholder="e.g. BWO hatch around 2pm" className="w-full input-rugged" />
+                <input value={form.hatch_activity} onChange={set('hatch_activity')} placeholder="e.g. BWO hatch around 2pm" className="w-full input-rugged" />
               </div>
             </div>
           )}
@@ -207,18 +227,18 @@ export default function CatchLog() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-amber-100" style={{ fontFamily: 'Bitter, Georgia, serif' }}>{c.species}</span>
-                  {c.lengthInches && <span className="badge-rugged"><Ruler className="w-3 h-3 text-amber-500" />{c.lengthInches}"</span>}
-                  {c.weightLbs && <span className="badge-rugged"><Weight className="w-3 h-3 text-amber-500" />{c.weightLbs}lb</span>}
+                  {c.length_inches && <span className="badge-rugged"><Ruler className="w-3 h-3 text-amber-500" />{c.length_inches}"</span>}
+                  {c.weight_lbs && <span className="badge-rugged"><Weight className="w-3 h-3 text-amber-500" />{c.weight_lbs}lb</span>}
                 </div>
                 <div className="text-sm text-stone-400 mt-1.5 space-y-0.5">
                   {c.fly && <p className="flex items-center gap-1.5">Fly: <span className="text-amber-500/80">{c.fly}</span></p>}
                   {c.technique && <p>Technique: {c.technique}</p>}
-                  {c.locationName && <p className="flex items-center gap-1"><MapPin className="w-3 h-3 text-green-500" />{c.locationName}</p>}
+                  {c.location_name && <p className="flex items-center gap-1"><MapPin className="w-3 h-3 text-green-500" />{c.location_name}</p>}
                   <p className="flex items-center gap-1 text-stone-500"><Calendar className="w-3 h-3" />{new Date(c.date).toLocaleDateString()} {new Date(c.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                  {(c.weather || c.waterTemp) && (
+                  {(c.weather || c.water_temp) && (
                     <div className="flex items-center gap-3 mt-1 pt-1 border-t border-stone-700/50">
                       {c.weather && <span className="flex items-center gap-1 text-xs"><Cloud className="w-3 h-3 text-blue-400" />{c.weather}</span>}
-                      {c.waterTemp && <span className="flex items-center gap-1 text-xs"><Thermometer className="w-3 h-3 text-blue-400" />{c.waterTemp}°F</span>}
+                      {c.water_temp && <span className="flex items-center gap-1 text-xs"><Thermometer className="w-3 h-3 text-blue-400" />{c.water_temp}°F</span>}
                     </div>
                   )}
                 </div>

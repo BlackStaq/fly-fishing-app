@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Fish, Bug, Map, BarChart3 } from 'lucide-react';
+import { Fish, Bug, Map, BarChart3, LogOut } from 'lucide-react';
+import { supabase } from '../supabase';
 
 const tabs = [
   { to: '/', icon: Fish, label: 'Catches' },
@@ -9,16 +10,23 @@ const tabs = [
 ];
 
 export default function Layout() {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[#1c1917]">
       <header className="header-lodge text-amber-100 px-4 py-3.5 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-amber-700/30 flex items-center justify-center border border-amber-600/40">
           <Fish className="w-5 h-5 text-amber-400" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold tracking-tight text-amber-50" style={{ fontFamily: 'Bitter, Georgia, serif' }}>TightLines</h1>
           <p className="text-[10px] text-amber-600 tracking-[0.2em] uppercase -mt-0.5">Fly Fishing Journal</p>
         </div>
+        <button onClick={handleSignOut} className="text-stone-500 hover:text-amber-400 p-2 transition-colors" title="Sign Out">
+          <LogOut className="w-4 h-4" />
+        </button>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-20">
