@@ -15,8 +15,9 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // Sign out any existing session so users must log in each visit
+    supabase.auth.signOut().then(() => {
+      setSession(null);
       setAuthLoading(false);
     });
 
