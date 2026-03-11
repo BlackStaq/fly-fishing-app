@@ -59,46 +59,46 @@ export default function FlyBox() {
   return (
     <div className="p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-[#0f4530]">Fly Box</h2>
-        <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm(emptyFly); }} className="bg-[#1a6b4a] text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm font-medium hover:bg-[#0f4530] transition-colors">
+        <h2 className="text-lg font-bold text-amber-100">Fly Box</h2>
+        <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm(emptyFly); }} className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all ${showForm ? 'bg-stone-700 text-stone-300 border border-stone-600' : 'btn-forest'}`}>
           {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {showForm ? 'Cancel' : 'Add Fly'}
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-xl shadow-md p-4 mb-4 space-y-3">
+        <div className="card-rugged p-4 mb-4 space-y-3">
           <div>
-            <label className="text-xs font-medium text-gray-500">Fly Name</label>
-            <input value={form.name} onChange={set('name')} placeholder="e.g. Elk Hair Caddis" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Fly Name</label>
+            <input value={form.name} onChange={set('name')} placeholder="e.g. Elk Hair Caddis" className="w-full input-rugged" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500">Type</label>
-              <select value={form.type} onChange={set('type')} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+              <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Type</label>
+              <select value={form.type} onChange={set('type')} className="w-full input-rugged">
                 {FLY_TYPES.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Size</label>
-              <input value={form.size} onChange={set('size')} placeholder="e.g. 16" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Size</label>
+              <input value={form.size} onChange={set('size')} placeholder="e.g. 16" className="w-full input-rugged" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500">Color</label>
-              <input value={form.color} onChange={set('color')} placeholder="e.g. Olive" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Color</label>
+              <input value={form.color} onChange={set('color')} placeholder="e.g. Olive" className="w-full input-rugged" />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Quantity</label>
-              <input type="number" value={form.quantity} onChange={set('quantity')} min="0" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Quantity</label>
+              <input type="number" value={form.quantity} onChange={set('quantity')} min="0" className="w-full input-rugged" />
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500">Notes</label>
-            <textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Tying notes, when to use..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            <label className="text-[11px] font-medium text-stone-400 uppercase tracking-wide">Notes</label>
+            <textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Tying notes, when to use..." className="w-full input-rugged" />
           </div>
-          <button onClick={save} disabled={!form.name} className="w-full bg-[#e8763a] text-white py-2.5 rounded-lg font-semibold hover:bg-[#d06530] transition-colors disabled:opacity-40">
+          <button onClick={save} disabled={!form.name} className="w-full btn-warm py-2.5 rounded-lg font-semibold text-sm">
             {editId ? 'Update Fly' : 'Add to Box'}
           </button>
         </div>
@@ -106,19 +106,19 @@ export default function FlyBox() {
 
       <div className="flex gap-2 mb-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search flies..." className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-1.5 text-sm bg-white" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search flies..." className="w-full input-rugged pl-9" />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-rugged">
           <option value="">All Types</option>
           {FLY_TYPES.map(t => <option key={t}>{t}</option>)}
         </select>
       </div>
 
       {!flies?.length && !showForm && (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-stone-500">
           <Bug className="w-16 h-16 mx-auto mb-3 opacity-30" />
-          <p className="text-lg font-medium">Fly box is empty</p>
+          <p className="text-lg font-medium" style={{ fontFamily: 'Bitter, Georgia, serif' }}>Fly box is empty</p>
           <p className="text-sm">Add your first fly pattern!</p>
         </div>
       )}
@@ -127,34 +127,34 @@ export default function FlyBox() {
         {filtered?.map(f => {
           const usage = flyUsageCount(f.name);
           return (
-            <div key={f.id} className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-3 hover:shadow-md transition-shadow">
+            <div key={f.id} className="card-rugged p-3 flex items-center gap-3 hover:border-stone-500 transition-all">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#0f4530] truncate">{f.name}</span>
-                  {f.size && <span className="text-xs text-gray-400">#{f.size}</span>}
+                  <span className="font-semibold text-amber-100 truncate">{f.name}</span>
+                  {f.size && <span className="text-xs text-stone-500">#{f.size}</span>}
                   {usage > 0 && (
-                    <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                    <span className="text-xs bg-amber-900/40 text-amber-400 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 border border-amber-700/30">
                       <Star className="w-3 h-3" />{usage}
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-400 flex gap-2">
-                  <span className="bg-gray-100 px-1.5 py-0.5 rounded">{f.type}</span>
+                <div className="text-xs text-stone-500 flex gap-2 mt-0.5">
+                  <span className="bg-stone-700/60 px-1.5 py-0.5 rounded border border-stone-600/50">{f.type}</span>
                   {f.color && <span>{f.color}</span>}
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => adjustQty(f.id, -1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                <button onClick={() => adjustQty(f.id, -1)} className="w-7 h-7 rounded-full bg-stone-700 border border-stone-600 flex items-center justify-center hover:bg-stone-600 transition-colors text-stone-300">
                   <Minus className="w-3 h-3" />
                 </button>
-                <span className={`w-8 text-center font-bold text-sm ${f.quantity === 0 ? 'text-red-500' : 'text-[#0f4530]'}`}>{f.quantity}</span>
-                <button onClick={() => adjustQty(f.id, 1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                <span className={`w-8 text-center font-bold text-sm ${f.quantity === 0 ? 'text-red-400' : 'text-amber-100'}`}>{f.quantity}</span>
+                <button onClick={() => adjustQty(f.id, 1)} className="w-7 h-7 rounded-full bg-stone-700 border border-stone-600 flex items-center justify-center hover:bg-stone-600 transition-colors text-stone-300">
                   <Plus className="w-3 h-3" />
                 </button>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => edit(f)} className="text-gray-400 hover:text-[#3b82c4] p-1 text-xs transition-colors">Edit</button>
-                <button onClick={() => remove(f.id)} className="text-gray-300 hover:text-red-500 p-1 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => edit(f)} className="text-stone-500 hover:text-amber-400 p-1 text-xs transition-colors">Edit</button>
+                <button onClick={() => remove(f.id)} className="text-stone-600 hover:text-red-400 p-1 transition-colors"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           );
